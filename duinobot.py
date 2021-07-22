@@ -1,4 +1,4 @@
-#/bin/python
+# /bin/python
 # -*- coding: utf-8 -*-
 ###############################################################################
 # duinobot-interactive
@@ -23,32 +23,43 @@
 # If not, see <multiplo.com.ar/soft/Mbq/Lic.Minibloq.ESP.pdf>.
 ###############################################################################
 
-from pyfirmata import DuinoBot, TCPDuinoBot, util, SERVO_CONFIG
-from pyfirmata import PIN_COMMANDS, PIN_GET_ANALOG, PIN_GET_DIGITAL
-from pyfirmata import ANALOG, DIGITAL, PWM, OUTPUT, INPUT
-import time
-import re
-import os
-import threading
-from datetime import datetime, timedelta
 import itertools
+import os
+import re
+import threading
+import time
+from datetime import datetime, timedelta
+
+from firmata_boards import (
+    ANALOG,
+    DIGITAL,
+    INPUT,
+    OUTPUT,
+    PIN_COMMANDS,
+    PIN_GET_ANALOG,
+    PIN_GET_DIGITAL,
+    PWM,
+    SERVO_CONFIG,
+    DuinoBot,
+    TCPDuinoBot,
+    util,
+)
 
 A0, A1, A2, A3, A4, A5, A6 = range(14, 21)
 MOVE_SERVO = 0x0A
 EXTENDED_PIN_MODE = 0x0B
+
 
 class Board(object):
     MOTOR_DELAY_TB6612 = timedelta(0, 0, 100000)
     lock = threading.Lock()
 
     def __ignore_motors(self, robot_id, left=None, right=None):
-        '''Para evitar dañar las placas los cambios de velocidad,
+        """Para evitar dañar las placas los cambios de velocidad,
         principalmente si invierten el sentido de giro de los motores,
-        deben limitarse a 100ms por recomendación del fabricante.'''
+        deben limitarse a 100ms por recomendación del fabricante."""
         now = datetime.now()
-        old_time = self._last_move.get(
-            robot_id, now - timedelta(0, 1, 0)
-        )
+        old_time = self._last_move.get(robot_id, now - timedelta(0, 1, 0))
 
         if left == 0 and right == 0:
             # Siempre dejar pasar los stop() sin registrarlos
@@ -58,8 +69,8 @@ class Board(object):
         self._last_move[robot_id] = now
         return False
 
-    def __init__(self, device='/dev/ttyUSB0', debug=False):
-        '''Inicializa el dispositivo de conexion con el/los robot/s'''
+    def __init__(self, device="/dev/ttyUSB0", debug=False):
+        """Inicializa el dispositivo de conexion con el/los robot/s"""
         self.board = DuinoBot(device, debug=debug)
         self._generic_initialization()
 
@@ -77,8 +88,8 @@ class Board(object):
         self.exit()
 
     def __getattribute__(self, name):
-        '''Permitir multithreading para evitar problemas con el método
-        senses'''
+        """Permitir multithreading para evitar problemas con el método
+        senses"""
         Board.lock.acquire()
         try:
             res = object.__getattribute__(self, name)
@@ -89,22 +100,29 @@ class Board(object):
         return res
 
     def motor0(self, vel, robotid):
-        if vel >= 0 and vel <= 100\
-                and not self.__ignore_motors(robotid, vel):
+        if vel >= 0 and vel <= 100 and not self.__ignore_motors(robotid, vel):
             self.board.send_sysex(1, [int(vel), robotid])
 
     def motor1(self, vel, robotid):
-        if vel >= 0 and vel <= 100\
-                and not self.__ignore_motors(robotid, right=vel):
+        if vel >= 0 and vel <= 100 and not self.__ignore_motors(robotid, right=vel):
             self.board.send_sysex(2, [int(vel), robotid])
 
     def motors(self, vel1, vel2, seconds=-1, robotid=0):
-        if abs(vel1) <= 100 and abs(vel2) <= 100\
-                and not self.__ignore_motors(robotid, vel1, vel2):
+        if (
+            abs(vel1) <= 100
+            and abs(vel2) <= 100
+            and not self.__ignore_motors(robotid, vel1, vel2)
+        ):
             self.board.send_sysex(
                 4,
-                [int(abs(vel1)), int(abs(vel2)), 1
-                    if vel1 > 0 else 0, 1 if vel2 > 0 else 0, robotid])
+                [
+                    int(abs(vel1)),
+                    int(abs(vel2)),
+                    1 if vel1 > 0 else 0,
+                    1 if vel2 > 0 else 0,
+                    robotid,
+                ],
+            )
             if seconds != -1:
                 self.board.pass_time(seconds)
                 self.motors(0, 0, -1, robotid)
@@ -158,8 +176,7 @@ class Board(object):
             if microseconds == 0:
                 self.board.send_sysex(5, [hi, lo, robotid])
             else:
-                self.board.send_sysex(
-                    5, [hi, lo, int(microseconds*1000), robotid])
+                self.board.send_sysex(5, [hi, lo, int(microseconds * 1000), robotid])
                 # self.board.pass_time(microseconds)
         else:
             self.board.send_sysex(5, [robotid])
@@ -192,17 +209,17 @@ class Board(object):
 
 
 class TCPBoard(Board):
-    def __init__(self, robot_ip='192.168.4.1', port=1234, debug=False):
+    def __init__(self, robot_ip="192.168.4.1", port=1234, debug=False):
         self.board = TCPDuinoBot(robot_ip, port, debug=debug)
         self._generic_initialization()
 
 
 class Robot(object):
     def __init__(self, board, robotid=0):
-        '''Inicializa el robot y lo asocia con la placa board.'''
+        """Inicializa el robot y lo asocia con la placa board."""
         self.robotid = robotid
         self.board = board
-        self.name = ''
+        self.name = ""
         self.pins = dict()
         self.board.set_pin_mode(A4, ANALOG, self.robotid)  # Line
         self.board.set_pin_mode(A5, ANALOG, self.robotid)  # Line
@@ -216,52 +233,52 @@ class Robot(object):
 
     # MOVIMIENTO
     def forward(self, vel=50, seconds=-1):
-        '''El robot avanza con velocidad vel durante seconds segundos.'''
+        """El robot avanza con velocidad vel durante seconds segundos."""
         self.board.motors(vel, vel, seconds, self.robotid)
 
     def backward(self, vel=50, seconds=-1):
-        '''El robot retrocede con velocidad vel durante seconds segundos.'''
+        """El robot retrocede con velocidad vel durante seconds segundos."""
         self.forward(-vel, seconds)
 
     def motors(self, vel1, vel2, seconds=-1):
-        '''Permite mover las ruedas independientemente,
+        """Permite mover las ruedas independientemente,
         con velocidad vel1 para un motor y vel2 para el otro motor,
         durante second segundos.
-        '''
+        """
         self.board.motors(vel1, vel2, seconds, self.robotid)
 
     def turnLeft(self, vel=50, seconds=-1):
-        '''El robot gira a la izquierda con velocidad vel durante seconds
+        """El robot gira a la izquierda con velocidad vel durante seconds
         segundos.
-        '''
+        """
         self.board.motors(vel, -vel, seconds, self.robotid)
 
     def turnRight(self, vel=50, seconds=-1):
-        '''El robot gira a la derecha con velocidad vel durante seconds
+        """El robot gira a la derecha con velocidad vel durante seconds
         segundos.
-        '''
+        """
         self.board.motors(-vel, vel, seconds, self.robotid)
 
     def stop(self):
-        '''Detiene todo movimiento del robot inmediatamente.'''
+        """Detiene todo movimiento del robot inmediatamente."""
         self.board.motors(0, 0, robotid=self.robotid)
 
     # SENSORES
     def getLine(self):
-        '''Devuelve los valores de los sensores de linea.'''
+        """Devuelve los valores de los sensores de linea."""
         return self.board.getLine(self.robotid)
 
     def getWheels(self):
-        '''Devuelve el valor de los sensores de las ruedas.'''
+        """Devuelve el valor de los sensores de las ruedas."""
         return self.board.getWheels(self.robotid)
 
     def getWheelsB(self):
         (r, l) = self.getWheels()
-        return (r/500, l/500)
+        return (r / 500, l / 500)
 
     def getObstacle(self, distance=10):
-        '''Devuelve True si hay un obstaculo a menos de distance
-         centimetros del robot.'''
+        """Devuelve True si hay un obstaculo a menos de distance
+        centimetros del robot."""
         ping = self.ping()
         if ping < 0:
             # Consideramos que una lectura fallida
@@ -270,75 +287,81 @@ class Robot(object):
         return ping < distance
 
     def battery(self):
-        '''Devuelve el voltaje de las baterías del robot.'''
+        """Devuelve el voltaje de las baterías del robot."""
         return self.board.battery(self.robotid)
 
     def ping(self):
-        '''Devuelve la distancia en centimetros al objeto frente al robot.'''
+        """Devuelve la distancia en centimetros al objeto frente al robot."""
         return self.board.ping(self.robotid)
 
     def beep(self, freq=200, seconds=0):
-        '''Hace que el robot emita un pitido con frecuencia freq durante
+        """Hace que el robot emita un pitido con frecuencia freq durante
         seconds segundos.
-        '''
+        """
         self.board.beep(freq, robotid=self.robotid)
         if seconds > 0:
             self.board.wait(seconds)
             self.board.beep(0, robotid=self.robotid)
 
     def sensors(self):
-        '''Imprime informacion de los sensores.'''
-        print 'Línea = ' + str(self.getLine())
-        print 'Ruedas = ' + str(self.getWheels())
-        print 'Obstaculo mas cercano = ' + str(self.ping()) + ' cm.'
-        print 'Bateria = ' + str(self.battery()) + ' v.'
+        """Imprime informacion de los sensores."""
+        print("Línea = " + str(self.getLine()))
+        print("Ruedas = " + str(self.getWheels()))
+        print("Obstaculo mas cercano = " + str(self.ping()) + " cm.")
+        print("Bateria = " + str(self.battery()) + " v.")
 
     # Identificadores
     def setId(self, newid):
-        '''Setea el robotid'''
+        """Setea el robotid"""
         self.board.set_id(newid, self.robotid)
         self.robotid = newid
 
     def setName(self, name):
-        '''Setea el nombre para el robot.'''
+        """Setea el nombre para el robot."""
         self.name = str(name)
 
     def getId(self):
-        '''Devuelve el robotid.'''
+        """Devuelve el robotid."""
         return self.robotid
 
     def getName(self):
-        '''Devuelve el nombre del robot.'''
+        """Devuelve el nombre del robot."""
         return self.name
 
     # Otras funciones
     def speak(self, msj):
-        '''Imprime en la terminal el mensaje msj.'''
-        print msj
+        """Imprime en la terminal el mensaje msj."""
+        print(msj)
 
     def configServo(self, pin, min_pulse=544, max_pulse=2400):
-        data = itertools.chain([pin],
-                               util.to_two_bytes(min_pulse),
-                               util.to_two_bytes(max_pulse),
-                               [self.robotid])
+        data = itertools.chain(
+            [pin],
+            util.to_two_bytes(min_pulse),
+            util.to_two_bytes(max_pulse),
+            [self.robotid],
+        )
         self.board.board.send_sysex(SERVO_CONFIG, data)
 
     def moveServo(self, pin, angle):
-        '''Pasa un ángulo entre 0 y 180 grados al servo conectado
-        al pin indicado'''
-        data = itertools.chain([pin], reversed(util.to_two_bytes(angle)),
-                               [self.robotid])
+        """Pasa un ángulo entre 0 y 180 grados al servo conectado
+        al pin indicado"""
+        data = itertools.chain(
+            [pin], reversed(util.to_two_bytes(angle)), [self.robotid]
+        )
         self.board.board.send_sysex(MOVE_SERVO, data)
 
+
 from senses import *
+
 Robot.senses = senses
 
 
 def wait(seconds):
-    '''Produce un retardo de seconds segundos en los que el robot no
+    """Produce un retardo de seconds segundos en los que el robot no
     hace nada.
-    '''
+    """
     time.sleep(seconds)
+
 
 __devPattern = re.compile(r"^ttyUSB\d+$")
 

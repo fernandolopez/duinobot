@@ -16,7 +16,7 @@
 ###############################################################################
 
 
-class SensesModel():
+class SensesModel:
     def __init__(self):
         self.wheelLeft = tk.StringVar()
         self.wheelRight = tk.StringVar()
@@ -24,7 +24,7 @@ class SensesModel():
         self.battery = tk.StringVar()
 
 
-class SensesGUI():
+class SensesGUI:
     def __init__(self, root, model):
         self.root = root
         root.title("Senses")
@@ -73,6 +73,7 @@ def _updateModel(model, messages, root):
 def _sensesDialog(messages):
     global tk
     import Tkinter  # Tkinter must be imported in the process that uses it
+
     tk = Tkinter
     root = tk.Tk()
     model = SensesModel()
@@ -84,15 +85,14 @@ def _sensesDialog(messages):
 
 def _sendSensorsValues(robot):
     messages = multiprocessing.Queue()
-    senses = multiprocessing.Process(target=_sensesDialog,
-                                     args=(messages,))
+    senses = multiprocessing.Process(target=_sensesDialog, args=(messages,))
     senses.daemon = True
     senses.start()
     while senses.is_alive():
         values = {
             "wheels": robot.getWheels(),
             "ping": robot.ping(),
-            "battery": robot.battery()
+            "battery": robot.battery(),
         }
         # values = {
         #     "line": (1,1),
@@ -103,17 +103,23 @@ def _sendSensorsValues(robot):
         time.sleep(1)
     senses.join()
 
+
 import platform
+
 mayor, minor, revision = platform.python_version_tuple()
-if mayor != '2' or minor < '6':
-    print("El módulo senses precisa una versión de Python mayor" +
-          "o igual a 2.6 y menor a 3")
+if mayor != "2" or minor < "6":
+    print(
+        "El módulo senses precisa una versión de Python mayor"
+        + "o igual a 2.6 y menor a 3"
+    )
 
     def senses(robot):
         print("Función no disponible en esta versión de Python")
+
+
 else:
-    import threading
     import multiprocessing
+    import threading
     import time
 
     def senses(robot):
@@ -121,8 +127,10 @@ else:
         update.setDaemon(True)
         update.start()
 
+
 if __name__ == "__main__":
     from duinobot import *
+
     b = Board("/dev/ttyUSB0")
     r = Robot(b, 1)
     senses(r)

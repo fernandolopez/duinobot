@@ -20,10 +20,11 @@
 
 try:
     import pygame
+
     # Inicializar solamente el Joystick es más rápido pero suele fallar
     pygame.init()
 except ImportError:
-    print('Para usar joysticks tenés que instalar pygame')
+    print("Para usar joysticks tenés que instalar pygame")
 
 
 def joysticks():
@@ -32,14 +33,19 @@ def joysticks():
     joys = []
     for id in range(pygame.joystick.get_count()):
         j = pygame.joystick.Joystick(id)
-        joys.append((id, j.get_name(),))
+        joys.append(
+            (
+                id,
+                j.get_name(),
+            )
+        )
         j.quit()
     return joys
 
 
 class Joystick:
     "Permite controlar un robot con un joystick"
-    if 'pygame' in globals():
+    if "pygame" in globals():
         joystickDetected = pygame.joystick.get_count() > 0
     else:
         joystickDetected = False
@@ -77,11 +83,12 @@ class Joystick:
         while True:
             event = pygame.event.wait()
             if (
-                    previous and
-                    event.type == pygame.JOYAXISMOTION and
-                    event.joy == previous.joy and
-                    event.value == previous.value and
-                    event.axis == previous.axis):
+                previous
+                and event.type == pygame.JOYAXISMOTION
+                and event.joy == previous.joy
+                and event.value == previous.value
+                and event.axis == previous.axis
+            ):
                 pass
             else:
                 if event.type == pygame.JOYAXISMOTION:
