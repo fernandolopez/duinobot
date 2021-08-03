@@ -16,6 +16,11 @@
 ###############################################################################
 
 
+import multiprocessing
+import threading
+import time
+
+
 class SensesModel:
     def __init__(self):
         self.wheelLeft = tk.StringVar()
@@ -71,10 +76,10 @@ def _updateModel(model, messages, root):
 
 
 def _sensesDialog(messages):
+    import tkinter  # Tkinter must be imported in the process that uses it
     global tk
-    import Tkinter  # Tkinter must be imported in the process that uses it
 
-    tk = Tkinter
+    tk = tkinter
     root = tk.Tk()
     model = SensesModel()
     gui = SensesGUI(root, model)
@@ -104,28 +109,10 @@ def _sendSensorsValues(robot):
     senses.join()
 
 
-import platform
-
-mayor, minor, revision = platform.python_version_tuple()
-if mayor != "2" or minor < "6":
-    print(
-        "El módulo senses precisa una versión de Python mayor"
-        + "o igual a 2.6 y menor a 3"
-    )
-
-    def senses(robot):
-        print("Función no disponible en esta versión de Python")
-
-
-else:
-    import multiprocessing
-    import threading
-    import time
-
-    def senses(robot):
-        update = threading.Thread(target=_sendSensorsValues, args=(robot,))
-        update.setDaemon(True)
-        update.start()
+def senses(robot):
+    update = threading.Thread(target=_sendSensorsValues, args=(robot,))
+    update.setDaemon(True)
+    update.start()
 
 
 if __name__ == "__main__":

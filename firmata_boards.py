@@ -68,21 +68,21 @@ class SerialBoard(Board):
         self.add_cmd_handler(PIN_COMMANDS, self._handle_sysex_pin_commands)
 
     def _handle_sysex_ping(self, *data):
-        major = data[0]
-        minor = data[1]
+        most_significant = data[0]
+        least_significant = data[1]
         robot = data[2]
-        self.nearest_obstacle[robot] = minor + major * 128
+        self.nearest_obstacle[robot] = (most_significant << 7) + least_significant
 
     def _handle_sysex_analog(self, *data):
-        major = data[0]
-        minor = data[1]
+        most_significant = data[0]
+        least_significant = data[1]
         robot = data[2]
-        self.analog_value[robot] = minor + major * 128
+        self.analog_value[robot] = (most_significant << 7) + least_significant
 
     def _handle_sysex_digital(self, *data):
-        major = data[0]
+        value = data[0]
         robot = data[1]
-        self.digital_value[robot] = major
+        self.digital_value[robot] = value
 
     def _handle_sysex_broadcast(self, *data):
         robot = data[0]
@@ -97,16 +97,16 @@ class SerialBoard(Board):
     def _handle_sysex_pin_commands(self, *data):
         # Versión mejorada que reemplaza a sysex_analog y sysex_digital
         if data[0] == PIN_GET_ANALOG:
-            major = data[1]
-            minor = data[2]
+            most_significant = data[1]
+            least_significant = data[2]
             pin = data[3]
             robot = data[4]
-            self.pin_analog_value(robot)[pin] = minor + major * 128
+            self.pin_analog_value(robot)[pin] = (most_significant << 7) + least_significant
         elif data[0] == PIN_GET_DIGITAL:
-            major = data[1]
+            value = data[1]
             pin = data[2]
             robot = data[3]
-            self.pin_digital_value(robot)[pin] = major
+            self.pin_digital_value(robot)[pin] = value
 
 
 class _WrapTCPSocket(object):

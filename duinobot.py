@@ -1,4 +1,4 @@
-# /bin/python
+#!/bin/python
 # -*- coding: utf-8 -*-
 ###############################################################################
 # duinobot-interactive
@@ -30,27 +30,17 @@ import threading
 import time
 from datetime import datetime, timedelta
 
-from firmata_boards import (
-    ANALOG,
-    DIGITAL,
-    INPUT,
-    OUTPUT,
-    PIN_COMMANDS,
-    PIN_GET_ANALOG,
-    PIN_GET_DIGITAL,
-    PWM,
-    SERVO_CONFIG,
-    DuinoBot,
-    TCPDuinoBot,
-    util,
-)
+from firmata_boards import (ANALOG, DIGITAL, INPUT, OUTPUT, PIN_COMMANDS,
+                            PIN_GET_ANALOG, PIN_GET_DIGITAL, PWM, SERVO_CONFIG,
+                            DuinoBot, TCPDuinoBot, util)
+from senses import senses
 
 A0, A1, A2, A3, A4, A5, A6 = range(14, 21)
 MOVE_SERVO = 0x0A
 EXTENDED_PIN_MODE = 0x0B
 
 
-class Board(object):
+class Board:
     MOTOR_DELAY_TB6612 = timedelta(0, 0, 100000)
     lock = threading.Lock()
 
@@ -131,7 +121,7 @@ class Board(object):
         self.board.nearest_obstacle[robotid] = None
         self.board.send_sysex(3, [robotid])
         # A veces hay que esperar más de 0.04 segundos
-        for i in xrange(6):
+        for i in range(6):
             # wait 20ms (ping delay) + 20ms (comm)
             self.board.pass_time(0.04)
             if self.board.nearest_obstacle[robotid] is not None:
@@ -220,7 +210,6 @@ class Robot(object):
         self.robotid = robotid
         self.board = board
         self.name = ""
-        self.pins = dict()
         self.board.set_pin_mode(A4, ANALOG, self.robotid)  # Line
         self.board.set_pin_mode(A5, ANALOG, self.robotid)  # Line
         self.board.set_pin_mode(A6, ANALOG, self.robotid)  # Battery
@@ -307,8 +296,8 @@ class Robot(object):
         """Imprime informacion de los sensores."""
         print("Línea = " + str(self.getLine()))
         print("Ruedas = " + str(self.getWheels()))
-        print("Obstaculo mas cercano = " + str(self.ping()) + " cm.")
-        print("Bateria = " + str(self.battery()) + " v.")
+        print("Obstáculo más cercano = " + str(self.ping()) + " cm.")
+        print("Batería = " + str(self.battery()) + "V")
 
     # Identificadores
     def setId(self, newid):
@@ -350,10 +339,8 @@ class Robot(object):
         )
         self.board.board.send_sysex(MOVE_SERVO, data)
 
-
-from senses import *
-
-Robot.senses = senses
+    def senses(self):
+        return senses(self)
 
 
 def wait(seconds):
