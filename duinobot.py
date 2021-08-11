@@ -30,6 +30,8 @@ import threading
 import time
 from datetime import datetime, timedelta
 
+import serial.tools.list_ports
+
 from firmata_boards import (ANALOG, DIGITAL, INPUT, OUTPUT, PIN_COMMANDS,
                             PIN_GET_ANALOG, PIN_GET_DIGITAL, PWM, SERVO_CONFIG,
                             DuinoBot, TCPDuinoBot, util)
@@ -263,7 +265,7 @@ class Robot(object):
 
     def getWheelsB(self):
         (r, l) = self.getWheels()
-        return (r / 500, l / 500)
+        return (r // 500, l // 500)
 
     def getObstacle(self, distance=10):
         """Devuelve True si hay un obstaculo a menos de distance
@@ -350,9 +352,7 @@ def wait(seconds):
     time.sleep(seconds)
 
 
-__devPattern = re.compile(r"^ttyUSB\d+$")
-
-
 def boards():
-    matching = filter(__devPattern.match, os.listdir("/dev"))
-    return map(lambda s: "/dev/" + s, matching)
+    """Devuelve una lista con los puertos serial disponibles.
+    """
+    return [port.device for port in serial.tools.list_ports.comports()]

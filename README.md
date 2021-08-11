@@ -78,8 +78,7 @@ instalación para el paquete en distribuciones basadas en Debian.
 De forma alternativa se puede clonar la última versión de Duinobot con git:
 ```bash
 git clone https://github.com/Robots-Linti/duinobot.git
-git submodule init
-git submodule update
+pip3 install .
 ```
 
 Manual de uso y material didáctico
