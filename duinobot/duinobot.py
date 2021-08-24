@@ -24,18 +24,16 @@
 ###############################################################################
 
 import itertools
-import os
-import re
 import threading
 import time
 from datetime import datetime, timedelta
 
 import serial.tools.list_ports
 
-from firmata_boards import (ANALOG, DIGITAL, INPUT, OUTPUT, PIN_COMMANDS,
+from .firmata_boards import (ANALOG, DIGITAL, INPUT, OUTPUT, PIN_COMMANDS,
                             PIN_GET_ANALOG, PIN_GET_DIGITAL, PWM, SERVO_CONFIG,
                             DuinoBot, TCPDuinoBot, util)
-from senses import senses
+from .senses import senses
 
 A0, A1, A2, A3, A4, A5, A6 = range(14, 21)
 MOVE_SERVO = 0x0A
