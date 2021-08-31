@@ -4,8 +4,7 @@ import select
 import socket
 
 import serial
-from pyfirmata import (ANALOG, DIGITAL, INPUT, OUTPUT, PWM, SERVO_CONFIG,
-                       Board, util)
+from pyfirmata import ANALOG, DIGITAL, INPUT, OUTPUT, PWM, SERVO_CONFIG, Board, util
 
 BOARDS = {
     "duinobot": {
@@ -28,7 +27,7 @@ PIN_GET_ANALOG = 0x01
 PIN_GET_DIGITAL = 0x02
 
 
-class SerialBoard(Board):
+class FirmataSerialBoard(Board):
     nearest_obstacle = [-1 for i in range(128)]
     analog_value = [-1 for i in range(128)]
     digital_value = [-1 for i in range(128)]
@@ -101,7 +100,9 @@ class SerialBoard(Board):
             least_significant = data[2]
             pin = data[3]
             robot = data[4]
-            self.pin_analog_value(robot)[pin] = (most_significant << 7) + least_significant
+            self.pin_analog_value(robot)[pin] = (
+                most_significant << 7
+            ) + least_significant
         elif data[0] == PIN_GET_DIGITAL:
             value = data[1]
             pin = data[2]
@@ -130,8 +131,10 @@ class _WrapTCPSocket(object):
         self.skt.close()
 
 
-class TCPBoard(Board):
+class FirmataTCPBoard(FirmataSerialBoard):
     def __init__(self, robot_ip, port, layout, name=None, debug=False):
+        self._pin_analog_value = {}
+        self._pin_digital_value = {}
         try:
             # Se crea el socket
             self.skt = socket.socket(socket.AF_INET, socket.SOCK_STREAM)
@@ -169,31 +172,3 @@ class TCPBoard(Board):
             self.iterate()
         # TODO Test whether we got a firmware name and version, otherwise there
         # probably isn't any Firmata installed
-
-
-class DuinoBot(SerialBoard):
-    """
-    A board that wil set itself up as an DuinoBot.
-    """
-
-    def __init__(self, *args, **kwargs):
-        args = list(args)
-        args.append(BOARDS["duinobot"])
-        super(DuinoBot, self).__init__(*args, **kwargs)
-
-    def __str__(self):
-        return "DuinoBot %s on %s" % (self.name, self.sp.port)
-
-
-class TCPDuinoBot(TCPBoard):
-    """
-    A board that wil set itself up as an DuinoBot.
-    """
-
-    def __init__(self, *args, **kwargs):
-        args = list(args)
-        args.append(BOARDS["duinobot"])
-        super(TCPDuinoBot, self).__init__(*args, **kwargs)
-
-    def __str__(self):
-        return "TCPDuinoBot %s on %s:%s" % (self.name, self.ip, self.port)

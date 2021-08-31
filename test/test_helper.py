@@ -80,7 +80,7 @@ class MockLowLevelBoard(object):
                 return ord(byte)
             except TypeError:
                 return byte
-        self.got("send_sysex", command, map(_ord, args))
+        self.got("send_sysex", command, list(map(_ord, args)))
 
     def pass_time(self, time):
         self.got("pass_time", time)

@@ -77,6 +77,7 @@ def _updateModel(model, messages, root):
 
 def _sensesDialog(messages):
     import tkinter  # Tkinter must be imported in the process that uses it
+
     global tk
 
     tk = tkinter

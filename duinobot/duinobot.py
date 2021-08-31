@@ -30,9 +30,21 @@ from datetime import datetime, timedelta
 
 import serial.tools.list_ports
 
-from .firmata_boards import (ANALOG, DIGITAL, INPUT, OUTPUT, PIN_COMMANDS,
-                            PIN_GET_ANALOG, PIN_GET_DIGITAL, PWM, SERVO_CONFIG,
-                            DuinoBot, TCPDuinoBot, util)
+from .firmata_boards import (
+    ANALOG,
+    DIGITAL,
+    INPUT,
+    OUTPUT,
+    PIN_COMMANDS,
+    PIN_GET_ANALOG,
+    PIN_GET_DIGITAL,
+    PWM,
+    SERVO_CONFIG,
+    FirmataSerialBoard,
+    FirmataTCPBoard,
+    util,
+    BOARDS,
+)
 from .senses import senses
 
 A0, A1, A2, A3, A4, A5, A6 = range(14, 21)
@@ -61,8 +73,11 @@ class Board:
 
     def __init__(self, device="/dev/ttyUSB0", debug=False):
         """Inicializa el dispositivo de conexion con el/los robot/s"""
-        self.board = DuinoBot(device, debug=debug)
+        self.board = FirmataSerialBoard(device, layout=BOARDS["duinobot"], debug=debug)
         self._generic_initialization()
+
+    def __str__(self):
+        return "DuinoBot %s on %s" % (self.name, self.sp.port)
 
     def _generic_initialization(self):
         it = util.Iterator(self.board)
@@ -200,8 +215,13 @@ class Board:
 
 class TCPBoard(Board):
     def __init__(self, robot_ip="192.168.4.1", port=1234, debug=False):
-        self.board = TCPDuinoBot(robot_ip, port, debug=debug)
+        self.board = FirmataTCPBoard(
+            robot_ip, port, layout=BOARDS["duinobot"], debug=debug
+        )
         self._generic_initialization()
+
+    def __str__(self):
+        return "TCPDuinoBot %s on %s:%s" % (self.name, self.ip, self.port)
 
 
 class Robot(object):
@@ -351,6 +371,5 @@ def wait(seconds):
 
 
 def boards():
-    """Devuelve una lista con los puertos serial disponibles.
-    """
+    """Devuelve una lista con los puertos serial disponibles."""
     return [port.device for port in serial.tools.list_ports.comports()]
